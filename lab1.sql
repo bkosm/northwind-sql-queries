@@ -39,6 +39,5 @@ select 'US_' + CompanyName as Name from Customers where Country = 'USA'
 union
 select 'PL_' + CompanyName as Name from Customers where Country = 'Poland' order by Name asc;
 --12
-select SupplierID, min(UnitPrice) as MinPrice from Products 
-where SupplierID = (select SupplierID from Suppliers) 
-order by SupplierID;
+select SupplierID, ProductName as Cheapest from Products as out where out.UnitPrice in 
+(select min(UnitPrice) from Products as inn where out.SupplierID = inn.SupplierID);
