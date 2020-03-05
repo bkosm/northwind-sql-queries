@@ -1,3 +1,6 @@
+--1
+create database uczelnia;
+use uczelnia;
 --2
 create table studenci (
 	nr_indeksu	int,
@@ -5,43 +8,43 @@ create table studenci (
 	nazwisko	varchar(100)	not null,
 	adres		varchar(100)	not null,
 	narodowosc	varchar(100)	default 'Polska',
-	primary key (nr_indeksu)
+	primary key 	(nr_indeksu)
 );
 --3
 create table wykladowcy (
 	wykladowca_id	int,
-	imie			varchar(100)	not null,
-	nazwisko		varchar(100)	not null,
-	primary key		(wykladowca_id)
+	imie		varchar(100)	not null,
+	nazwisko	varchar(100)	not null,
+	primary key	(wykladowca_id)
 );
 --4
 create table kierunki (
-	kierunek_id		int,
-	nazwa			varchar(255)	not null,
-	primary key		(kierunek_id)
+	kierunek_id	int,
+	nazwa		varchar(255)	not null,
+	primary key	(kierunek_id)
 );
 --5
 create table przedmioty (
 	przedmiot_id	int,
-	kierunek_id		int foreign key references kierunki(kierunek_id)		not null,
+	kierunek_id	int foreign key references kierunki(kierunek_id)	not null,
 	wykladowca_id	int foreign key references wykladowcy(wykladowca_id)	not null,
-	nazwa			varchar(255)											not null,
-	primary key		(przedmiot_id)
+	nazwa		varchar(255)						not null,
+	primary key	(przedmiot_id)
 );
 --6
 create table studenci_przedmioty (
-	nr_indeksu		int foreign key references studenci(nr_indeksu),
+	nr_indeksu	int foreign key references studenci(nr_indeksu),
 	przedmiot_id	int foreign key references przedmioty(przedmiot_id),
-	primary key		(nr_indeksu, przedmiot_id)
+	primary key	(nr_indeksu, przedmiot_id)
 );
 --7
 create table oceny (
-	ocena_id		int,
-	nr_indeksu		int foreign key references studenci(nr_indeksu)		not null,
-	przedmiot_id	int foreign key references przedmioty(przedmiot_id) not null,
-	wartosc			decimal(2,1)										default 2.0,
-	data			date												default getdate(),
-	primary key		(ocena_id)
+	ocena_id	int,
+	nr_indeksu	int foreign key references studenci(nr_indeksu)		not null,
+	przedmiot_id	int foreign key references przedmioty(przedmiot_id) 	not null,
+	wartosc		decimal(2,1)						default 2.0,
+	data		date							default getdate(),
+	primary key	(ocena_id)
 );
 --8
 alter table oceny
