@@ -30,9 +30,8 @@ AS DECLARE
 BEGIN
 SELECT @produkt = ProductName FROM INSERTED
 SELECT @kategoria = CategoryID FROM INSERTED
-SELECT * FROM INSERTED
 
-PRINT 'P:' + @produkt + ' K: ' + CAST(@kategoria AS VARCHAR(40))
+PRINT 'P:' + @produkt + '; K: ' + CAST(@kategoria AS VARCHAR(40)) + ';'
 END
 INSERT INTO Products(ProductName, CategoryID)
 VALUES ('Produkt', 1)
