@@ -94,7 +94,7 @@ BEGIN
 	SELECT @TempCity = I.City FROM inserted I
 
 	DECLARE cur CURSOR FOR
-	SELECT P.ProductName FROM Customers C
+	SELECT DISTINCT P.ProductName FROM Customers C
 	INNER JOIN Orders O
 	ON O.CustomerID = C.CustomerID
 	INNER JOIN [Order Details] OD
@@ -119,3 +119,85 @@ END
 INSERT INTO Customers (CustomerID, CompanyName, City)
 VALUES ('90837', 'NowySklep', 'Graz')
 -- 7
+CREATE TRIGGER sprawdzStan
+ON [Order Details]
+INSTEAD OF INSERT
+AS
+DECLARE @UnitsOrdered SMALLINT, @ProductId INT, @UnitsInStock SMALLINT
+BEGIN
+	SELECT @UnitsOrdered = I.Quantity, @ProductId = I.ProductID FROM inserted I
+
+	SELECT @UnitsInStock = P.UnitsInStock
+	FROM Products P
+	WHERE P.ProductID = @ProductId
+
+	IF @UnitsOrdered > @UnitsInStock
+	BEGIN
+		PRINT 'Zbyt mala ilosc sztuk na stanie do przeprowadzenia transakcji'
+		ROLLBACK TRANSACTION
+		RETURN
+	END
+
+	UPDATE Products
+	SET UnitsInStock = UnitsInStock - @UnitsOrdered
+	WHERE ProductID = @ProductId
+
+	INSERT INTO [Order Details]
+	SELECT * FROM inserted
+END
+
+INSERT INTO [Order Details]
+VALUES (10248, 5, 31, 2, 0)
+-- 8
+CREATE PROCEDURE dodajProduktDo @NazwaFirmy NVARCHAR(40), @NazwaProduktu NVARCHAR(40)
+AS
+DECLARE @CustomerId NCHAR(5)
+DECLARE @ProductId INT
+DECLARE @UnitPrice MONEY
+
+SELECT @CustomerId = CustomerID
+FROM Customers
+WHERE CompanyName LIKE @NazwaFirmy
+
+SELECT @ProductId = ProductID, @UnitPrice = UnitPrice
+FROM Products
+WHERE ProductName LIKE @NazwaProduktu
+
+IF NOT EXISTS (SELECT * FROM Orders WHERE CustomerID = @CustomerId)
+BEGIN
+	DECLARE @EmployeeId INT
+	DECLARE @LastOrderId INT
+
+	SELECT @EmployeeId = Out.EmployeeID
+	FROM (SELECT TOP 1 EmployeeID, COUNT(OrderID) Amount
+	FROM Orders
+	GROUP BY EmployeeID
+	ORDER BY Amount ASC) Out
+
+	SELECT @LastOrderId = MAX(OrderID) 
+	FROM Orders
+
+	INSERT INTO Orders(OrderID, CustomerID, EmployeeID, OrderDate)
+	VALUES (@LastOrderId+1, @CustomerId, @EmployeeId, GETDATE())
+
+	INSERT INTO [Order Details] 
+	VALUES (@LastOrderId+1, @ProductId, @UnitPrice, 1, 0)
+
+	RETURN
+END	
+
+DECLARE @OrderId INT
+
+SELECT @OrderId = Out.OrderID
+FROM (SELECT TOP 1 OD.OrderID, COUNT(OD.ProductID) Minimal
+FROM Orders O
+INNER JOIN [Order Details] OD
+ON O.OrderID = OD.OrderID
+WHERE O.CustomerID = @CustomerId
+GROUP BY OD.OrderID
+ORDER BY Minimal ASC) Out
+
+INSERT INTO [Order Details] 
+VALUES (@OrderId, @ProductId, @UnitPrice, 1, 0)
+
+GO
