@@ -13,12 +13,11 @@ CREATE PROCEDURE zamowieniaZ @Fraza NVARCHAR(15), @Cena MONEY
 AS
 SELECT *
 FROM Orders o
-WHERE o.ShipCountry LIKE '%'+@Fraza+'%' AND EXISTS (SELECT o.OrderId
-													FROM [Order Details] od
-													INNER JOIN Orders o 
-													ON o.OrderID = od.OrderID
-													GROUP BY o.OrderID
-													HAVING SUM(od.UnitPrice*od.Quantity*(1-od.Discount)) > @Cena)
+WHERE o.ShipCountry LIKE '%'+@Fraza+'%' AND EXISTS (	SELECT o.OrderId
+							FROM [Order Details] od
+							INNER JOIN Orders o 															ON o.OrderID = od.OrderID
+							GROUP BY o.OrderID
+							HAVING SUM(od.UnitPrice*od.Quantity*(1-od.Discount)) > @Cena)
 GO
 
 EXEC zamowieniaZ 'USA', 10000
@@ -41,9 +40,9 @@ VALUES ('Produkt', 1)
 -- 4 Skonstruuj procedurę ustawiającą rabat (Discount) o podanej wysokości produktom, których wartość (cena jednostkowa · ilość) jest większa niż podana wartość.
 CREATE PROCEDURE ustawRabat @Cena MONEY, @Rabat REAL
 AS
-UPDATE [Order Details]
-SET Discount = @Rabat
-WHERE UnitPrice * Quantity > @Cena
+UPDATE 	[Order Details]
+SET 	Discount = @Rabat
+WHERE 	UnitPrice * Quantity > @Cena
 GO
 
 EXEC ustawRabat 100, 0.2
@@ -60,33 +59,33 @@ DECLARE @TempKey int
 IF EXISTS (SELECT * FROM inserted I) AND EXISTS (SELECT * FROM deleted)
 BEGIN
   	SELECT @TempKey = I.OrderID FROM inserted I
-	UPDATE Orders
+	UPDATE 	Orders
 	SET	LastModified = GETDATE()
-	WHERE OrderID = @TempKey
+	WHERE 	OrderID = @TempKey
 	
   	SELECT @TempKey = D.OrderID FROM deleted D
-	UPDATE Orders
+	UPDATE 	Orders
 	SET	LastModified = GETDATE()
-	WHERE OrderID = @TempKey
+	WHERE 	OrderID = @TempKey
 END
 IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS(SELECT * FROM deleted)
 BEGIN
   	SELECT @TempKey = I.OrderID FROM inserted I
-	UPDATE Orders
+	UPDATE 	Orders
 	SET	LastModified = GETDATE()
-	WHERE OrderID = @TempKey
+	WHERE 	OrderID = @TempKey
 END
 IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS(SELECT * FROM inserted)
 BEGIN
 	SELECT @TempKey = D.OrderID FROM deleted D
-	UPDATE Orders
+	UPDATE 	Orders
 	SET	LastModified = GETDATE()
-	WHERE OrderID = @TempKey
+	WHERE 	OrderID = @TempKey
 END
 
-UPDATE Orders 
-SET Freight = 12
-WHERE OrderID = 10248;
+UPDATE 	Orders 
+SET 	Freight = 12
+WHERE 	OrderID = 10248;
 
 -- 6 Zaprojektuj wyzwalacz, który po dodaniu nowego klienta wypisze (PRINT) informacje o produktach zakupionych przez klientów z tego samego miasta co nowy klient.
 CREATE TRIGGER pokazProdukty
@@ -175,9 +174,9 @@ BEGIN
 
 	SELECT @EmployeeId = Out.EmployeeID
 	FROM (	SELECT TOP 1 EmployeeID, COUNT(OrderID) Amount
-			FROM Orders
-			GROUP BY EmployeeID
-			ORDER BY Amount ASC) Out
+		FROM Orders
+		GROUP BY EmployeeID
+		ORDER BY Amount ASC) Out
 
 	SELECT @LastOrderId = MAX(OrderID) 
 	FROM Orders
@@ -195,12 +194,12 @@ DECLARE @OrderId INT
 
 SELECT @OrderId = Out.OrderID
 FROM (	SELECT TOP 1 OD.OrderID, COUNT(OD.ProductID) Minimal
-		FROM Orders O
-		INNER JOIN [Order Details] OD
-		ON O.OrderID = OD.OrderID
-		WHERE O.CustomerID = @CustomerId
-		GROUP BY OD.OrderID
-		ORDER BY Minimal ASC) Out
+	FROM Orders O
+	INNER JOIN [Order Details] OD
+	ON O.OrderID = OD.OrderID
+	WHERE O.CustomerID = @CustomerId
+	GROUP BY OD.OrderID
+	ORDER BY Minimal ASC) Out
 
 INSERT INTO [Order Details] 
 VALUES (@OrderId, @ProductId, @UnitPrice, 1, 0)
