@@ -1,59 +1,67 @@
 --1 Utwórz nową bazę danych o nazwie uczelnia oraz wybierz ją (USE ...).
-create database uczelnia;
-use uczelnia;
+
+CREATE DATABASE uczelnia;
+USE uczelnia;
+
 --2 Utwórz nową tabelę o nazwie studenci zawierającą następujące kolumny:
 --– nr_indeksu (klucz główny),
 --– imie (ciąg znaków, niepuste),
 --– nazwisko (ciąg znaków, niepuste),
 --– adres (ciąg znaków, niepuste),
 --– narodowosc (ciąg znaków, niepuste, domyślnie ‘Polska’).
-create table studenci (
-	nr_indeksu	int,
-	imie		varchar(100)	not null,
-	nazwisko	varchar(100)	not null,
-	adres		varchar(100)	not null,
-	narodowosc	varchar(100)	default 'Polska',
-	primary key 	(nr_indeksu)
+
+CREATE TABLE studenci (
+	nr_indeksu	INT PRIMARY KEY,
+	imie		VARCHAR(100) NOT NULL,
+	nazwisko	VARCHAR(100) NOT NULL,
+	adres		VARCHAR(100) NOT NULL,
+	narodowosc	VARCHAR(100) DEFAULT 'Polska'
 );
+
 --3 Utwórz nową tabelę o nazwie wykladowcy zawierającą następujące kolumny:
 --– wykladowca_id (klucz główny),
 --– imie (ciąg znaków, niepuste),
 --– nazwisko (ciąg znaków, niepuste).
-create table wykladowcy (
-	wykladowca_id	int,
-	imie		varchar(100)	not null,
-	nazwisko	varchar(100)	not null,
-	primary key	(wykladowca_id)
+
+CREATE TABLE wykladowcy (
+	wykladowca_id	INT PRIMARY KEY,
+	imie		VARCHAR(100) NOT NULL,
+	nazwisko	VARCHAR(100) NOT NULL
 );
+
 --4 Utwórz nową tabelę o nazwie kierunki zawierającą następujące kolumny:
 --– kierunek_id (klucz główny),
 --– nazwa (ciąg znaków, niepuste).
-create table kierunki (
-	kierunek_id	int,
-	nazwa		varchar(255)	not null,
-	primary key	(kierunek_id)
+
+CREATE TABLE kierunki (
+	kierunek_id	INT PRIMARY KEY,
+	nazwa		VARCHAR(255) NOT NULL
 );
+
 --5 Utwórz nową tabelę o nazwie przedmioty zawierającą następujące kolumny:
 --– przedmiot_id (klucz główny),
 --– kierunek_id (klucz obcy z tabeli kierunki, niepuste),
 --– wykladowca_id (klucz obcy z tabeli wykladowcy, niepuste),
 --– nazwa (ciąg znaków, niepuste).
-create table przedmioty (
-	przedmiot_id	int,
-	kierunek_id	int foreign key references kierunki(kierunek_id)	not null,
-	wykladowca_id	int foreign key references wykladowcy(wykladowca_id)	not null,
-	nazwa		varchar(255)						not null,
-	primary key	(przedmiot_id)
+
+CREATE TABLE przedmioty (
+	przedmiot_id	INT PRIMARY KEY,
+	kierunek_id	INT FOREIGN KEY REFERENCES kierunki(kierunek_id) NOT NULL,
+	wykladowca_id	INT FOREIGN KEY REFERENCES wykladowcy(wykladowca_id) NOT NULL,
+	nazwa		VARCHAR(255) NOT NULL
 );
+
 --6 Utwórz nową tabelę o nazwie studenci_przedmioty zawierającą następujące kolumny:
 --– nr_indeksu (klucz obcy z tabeli studenci),
 --– przedmiot_id (klucz obcy z tabeli przedmioty),
 --– (klucz główny tej tabeli powinny stanowić nr_indeksu oraz przedmiot_id)
+
 create table studenci_przedmioty (
-	nr_indeksu	int foreign key references studenci(nr_indeksu),
-	przedmiot_id	int foreign key references przedmioty(przedmiot_id),
+	nr_indeksu	INT FOREIGN KEY REFERENCES studenci(nr_indeksu),
+	przedmiot_id	INT FOREIGN KEY REFERENCES przedmioty(przedmiot_id),
 	primary key	(nr_indeksu, przedmiot_id)
 );
+
 --7 Utwórz nową tabelę o nazwie oceny zawierającą następujące kolumny:
 --– ocena_id (klucz główny),
 --– nr_indeksu (klucz obcy z tabeli studenci, niepuste),
