@@ -10,7 +10,7 @@ FOR XML PATH('Products'), ROOT('Product');
 
 WITH XMLNAMESPACES ('http://put.poznan.pl' AS ns)
 SELECT ProductID
-	, CAST((SELECT P.* FOR XML PATH('Product')) AS XML) AS Data
+    , CAST((SELECT P.* FOR XML PATH('Product')) AS XML) AS Data
 INTO XmlProducts
 FROM Products P;
 
@@ -19,10 +19,10 @@ FROM Products P;
 
 WITH XMLNAMESPACES ('http://put.poznan.pl' AS ns)
 SELECT ProductID
-	, Data.value('(//ProductName)[1]', 'varchar(30)') AS ProductName
-	, CAST(Data.query('
-		for $x in Product
-		return <ProductInfo>{($x/ProductName, $x/UnitPrice)}</ProductInfo>') AS XML) AS Result
+    , Data.value('(//ProductName)[1]', 'varchar(30)') AS ProductName
+    , CAST(Data.query('
+        for $x in Product
+        return <ProductInfo>{($x/ProductName, $x/UnitPrice)}</ProductInfo>') AS XML) AS Result
 FROM XmlProducts
 ORDER BY ProductName;
 
@@ -54,8 +54,8 @@ SELECT @t.query('
 -- których całkowita wartość przekroczyła 15000 (piętnaście tysięcy).
 
 SELECT O.*
-	, CAST((	SELECT Z.* FROM [Order Details] AS Z
-				WHERE Z.OrderID = O.OrderID
-				FOR XML RAW('Detail')) AS XML) 
+    , CAST((    SELECT Z.* FROM [Order Details] AS Z
+                WHERE Z.OrderID = O.OrderID
+                FOR XML RAW('Detail')) AS XML) 
 FROM Orders O
 FOR XML RAW('Order'), ROOT('Orders');
