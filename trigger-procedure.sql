@@ -66,7 +66,7 @@ ALTER TABLE Orders
 ADD LastModified DATETIME;
 --
 CREATE TRIGGER odswiezModyfikacje
-ON OrderDetails
+ON [Order Details]
 AFTER INSERT, UPDATE, DELETE
 AS
 DECLARE @TempKey INT = NULL
