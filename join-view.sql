@@ -4,7 +4,7 @@ CREATE VIEW "Products from USA" AS
 SELECT * 
 FROM Products
 WHERE SupplierID IN (	SELECT SupplierID 
-						FROM Suppliers
+                        FROM Suppliers
 						WHERE Country = 'USA');
 
 -- 2 Wyświetl klientów, którzy nie zakupili żadnego produktu (użyj NOT IN).
