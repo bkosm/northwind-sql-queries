@@ -11,7 +11,7 @@ WHERE SupplierID IN (	SELECT SupplierID
 
 SELECT *
 FROM Customers
-WHERE CustomerID NOT IN (	SELECT CustomerID
+WHERE CustomerID NOT IN (   SELECT CustomerID
                             FROM Orders);
 
 -- 3 Wyświetl wszystkie możliwe pary (iloczyn kartezjański) imion i nazwisk pracowników (FirstName, LastName).
