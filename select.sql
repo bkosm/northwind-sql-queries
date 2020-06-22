@@ -1,7 +1,14 @@
---1 Wypisz wszystkich klientów (Customers), których nazwę firmy rozpoczyna litera ‘C‘, a ilość znaków składające się na nazwę kraju (Country) jest większa niż 6 (sześć).
+--1 Wypisz wszystkich klientów (Customers), których nazwę firmy rozpoczyna litera ‘C‘, 
+--  a ilość znaków składające się na nazwę kraju (Country) jest większa niż 6 (sześć).
+
 select * from Customers where CompanyName like 'C%' and len(Country) > 6;
---2 Wypisz wszystkie identyfikatory zamówień (Order Details) wraz z obliczoną wartością dla każdego produktu należącego do danego zamówienia (cena jednostkowa, ilość, rabat), odpowiednio nazwij nowo powstałą kolumnę.
+
+--2 Wypisz wszystkie identyfikatory zamówień (Order Details) wraz z obliczoną wartością 
+--  dla każdego produktu należącego do danego zamówienia (cena jednostkowa, ilość, rabat), 
+--  odpowiednio nazwij nowo powstałą kolumnę.
+
 select OrderID, UnitPrice * Quantity * Discount as OverallPrice from [Order Details];
+
 --3 Rozszerz poprzednie zapytanie tak, aby uzyskać identyfikatory zamówień wraz z wartościami (kwotami do zapłaty) za całe zamówienia (zapoznaj się z GROUP BY ).
 select OrderID, sum(UnitPrice * Quantity * Discount) as OverallPrice from [Order Details] group by OrderID;
 --4 Rozszerz poprzednie zapytanie o wypisywanie liczby unikatowych produktów składających się na konkretne zamówienie (odpowiednio nazwij nową kolumnę).
