@@ -53,7 +53,7 @@ SELECT @t.query('
 --6 Utwórz zapytanie wyświetlające dokument XML zawierający informacje o zamówieniach (tabele Orders oraz Order Details), 
 -- których całkowita wartość przekroczyła 15000 (piętnaście tysięcy).
 SELECT O.OrderID
-	, CAST(SUM((1 - Odd.Discount) * Odd.UnitPrice * Odd.Quantity) AS INT) AS Price
+    , CAST(SUM((1 - Odd.Discount) * Odd.UnitPrice * Odd.Quantity) AS INT) AS Price
     , CAST((    SELECT Od.* 
 				FROM [Order Details] Od
                 WHERE Od.OrderID = O.OrderID
