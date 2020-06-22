@@ -84,7 +84,7 @@ BEGIN
 	SELECT @TempKey = OrderID FROM DELETED
 END
 
-IF (@TempKey != NULL)
+IF (@TempKey IS NOT NULL)
 BEGIN
     UPDATE Orders
     SET	LastModified = GETDATE()
@@ -95,105 +95,111 @@ UPDATE [Order Details]
 SET Quantity = 2
 WHERE OrderID = 10248;
 
--- 6 Zaprojektuj wyzwalacz, który po dodaniu nowego klienta wypisze (PRINT) informacje o produktach zakupionych przez klientów z tego samego miasta co nowy klient.
+-- 6 Zaprojektuj wyzwalacz, który po dodaniu nowego klienta wypisze (PRINT) informacje o produktach zakupionych 
+--   przez klientów z tego samego miasta co nowy klient.
+
 CREATE TRIGGER pokazProdukty
 ON Customers
 AFTER INSERT
-AS DECLARE @TempCity NVARCHAR(15), @TempProduct NVARCHAR(40)
-BEGIN
-	SELECT @TempCity = I.City FROM inserted I
+AS 
+DECLARE @TempCity NVARCHAR(15), @TempProduct NVARCHAR(40)
 
-	DECLARE cur CURSOR FOR
-	SELECT DISTINCT P.ProductName FROM Customers C
-	INNER JOIN Orders O
-	ON O.CustomerID = C.CustomerID
-	INNER JOIN [Order Details] OD
-	ON OD.OrderID = O.OrderID
-	INNER JOIN Products P
-	ON OD.ProductID = P.ProductID
-	WHERE C.City LIKE @TempCity
+SELECT @TempCity = City FROM INSERTED
 
-	OPEN cur
+DECLARE cur CURSOR FOR
+SELECT DISTINCT P.ProductName FROM Customers C
+INNER JOIN Orders O ON O.CustomerID = C.CustomerID
+INNER JOIN [Order Details] Od ON Od.OrderID = O.OrderID
+INNER JOIN Products P ON Od.ProductID = P.ProductID
+WHERE C.City LIKE @TempCity
 
-	FETCH NEXT FROM cur INTO @TempProduct;
-	WHILE @@FETCH_STATUS = 0
-	BEGIN   
-		PRINT 'Produkt kupiony w ' + @TempCity + ': ' + @TempProduct
-		FETCH NEXT FROM cur INTO @TempProduct;
-	END
+OPEN cur
 
-	CLOSE cur;
-	DEALLOCATE cur;
+FETCH NEXT FROM cur INTO @TempProduct;
+WHILE @@FETCH_STATUS = 0
+BEGIN   
+    PRINT 'Produkt kupiony w ' + @TempCity + ': ' + @TempProduct
+    FETCH NEXT FROM cur INTO @TempProduct;
 END
 
+CLOSE cur;
+DEALLOCATE cur;
+--
 INSERT INTO Customers (CustomerID, CompanyName, City)
 VALUES ('90837', 'NowySklep', 'Graz')
 
--- 7 Zaprojektuj wyzwalacz, który przed dodaniem nowego produktu do zamówienia sprawdzi czy liczba zamawianych sztuk nie przekracza bieżącego stanu magazynowego (UnitsInStock). Jeżeli w magazynie nie ma wystarczającej liczby sztuk zamawianego produktu transakcję należy wycofać, w przeciwnym przypadku należy uaktualnić stan magazynowy oraz dodać produkt do zamówienia 
+-- 7 Zaprojektuj wyzwalacz, który przed dodaniem nowego produktu do zamówienia sprawdzi czy liczba zamawianych 
+--   sztuk nie przekracza bieżącego stanu magazynowego (UnitsInStock). Jeżeli w magazynie nie ma wystarczającej 
+--   liczby sztuk zamawianego produktu transakcję należy wycofać, w przeciwnym przypadku należy uaktualnić 
+--   stan magazynowy oraz dodać produkt do zamówienia.
+
 CREATE TRIGGER sprawdzStan
 ON [Order Details]
 INSTEAD OF INSERT
 AS
 DECLARE @UnitsOrdered SMALLINT, @ProductId INT, @UnitsInStock SMALLINT
+
+
+SELECT @UnitsOrdered = Quantity
+    , @ProductId = ProductID 
+FROM INSERTED
+
+SELECT @UnitsInStock = P.UnitsInStock
+FROM Products P
+WHERE P.ProductID = @ProductId
+
+IF (@UnitsOrdered > @UnitsInStock)
 BEGIN
-	SELECT @UnitsOrdered = I.Quantity, @ProductId = I.ProductID FROM inserted I
-
-	SELECT @UnitsInStock = P.UnitsInStock
-	FROM Products P
-	WHERE P.ProductID = @ProductId
-
-	IF @UnitsOrdered > @UnitsInStock
-	BEGIN
-		PRINT 'Zbyt mala ilosc sztuk na stanie do przeprowadzenia transakcji'
-		ROLLBACK TRANSACTION
-		RETURN
-	END
-
-	UPDATE Products
-	SET UnitsInStock = UnitsInStock - @UnitsOrdered
-	WHERE ProductID = @ProductId
-
-	INSERT INTO [Order Details]
-	SELECT * FROM inserted
+	PRINT 'Zbyt mala ilosc sztuk na stanie do przeprowadzenia transakcji'
+	ROLLBACK TRANSACTION
+	RETURN
 END
 
+UPDATE Products
+SET UnitsInStock -= @UnitsOrdered
+WHERE ProductID = @ProductId
+
+INSERT INTO [Order Details]
+SELECT * FROM INSERTED
+--
 INSERT INTO [Order Details]
 VALUES (10248, 5, 31, 2, 0)
 
--- 8 Skonstruuj procedurę dodającą produkt (o podanej nazwie) do zamówienia klienta (o podanej nazwie firmy). Jeżeli dany klient nie posiada żadnych zamówień, to utwórz nowe przypisując do niego pracownika, który „obsługuje” najmniej zamówień. W przypadku gdy klient posiada zamówienia, to dodaj produkt do tego, które zawiera najmniej produktów. 
+-- 8 Skonstruuj procedurę dodającą produkt (o podanej nazwie) do zamówienia klienta (o podanej nazwie firmy). 
+--   Jeżeli dany klient nie posiada żadnych zamówień, to utwórz nowe przypisując do niego pracownika, 
+--   który „obsługuje” najmniej zamówień. W przypadku gdy klient posiada zamówienia, to dodaj produkt do tego, 
+--   które zawiera najmniej produktów. 
+
 CREATE PROCEDURE dodajProduktDo @NazwaFirmy NVARCHAR(40), @NazwaProduktu NVARCHAR(40)
 AS
-DECLARE @CustomerId NCHAR(5)
-DECLARE @ProductId INT
-DECLARE @UnitPrice MONEY
+DECLARE @CustomerId NCHAR(5), @ProductId INT, @UnitPrice MONEY
 
 SELECT @CustomerId = CustomerID
 FROM Customers
 WHERE CompanyName LIKE @NazwaFirmy
 
-SELECT @ProductId = ProductID, @UnitPrice = UnitPrice
+SELECT @ProductId = ProductID
+    , @UnitPrice = UnitPrice
 FROM Products
 WHERE ProductName LIKE @NazwaProduktu
 
 IF NOT EXISTS (SELECT * FROM Orders WHERE CustomerID = @CustomerId)
 BEGIN
-	DECLARE @EmployeeId INT
-	DECLARE @LastOrderId INT
+	DECLARE @EmployeeId INT, @LastOrderId INT
 
 	SELECT @EmployeeId = Out.EmployeeID
-	FROM (	SELECT TOP 1 EmployeeID, COUNT(OrderID) Amount
-		FROM Orders
-		GROUP BY EmployeeID
-		ORDER BY Amount ASC) Out
+	FROM (  SELECT TOP 1 EmployeeID, COUNT(OrderID) AS Amount
+            FROM Orders
+            GROUP BY EmployeeID
+            ORDER BY Amount ASC) Out
 
-	SELECT @LastOrderId = MAX(OrderID) 
-	FROM Orders
+	SELECT @LastOrderId = MAX(OrderID) FROM Orders
 
 	INSERT INTO Orders(OrderID, CustomerID, EmployeeID, OrderDate)
-	VALUES (@LastOrderId+1, @CustomerId, @EmployeeId, GETDATE())
+	VALUES (@LastOrderId + 1, @CustomerId, @EmployeeId, GETDATE())
 
 	INSERT INTO [Order Details] 
-	VALUES (@LastOrderId+1, @ProductId, @UnitPrice, 1, 0)
+	VALUES (@LastOrderId + 1, @ProductId, @UnitPrice, 1, 0)
 
 	RETURN
 END	
@@ -201,17 +207,18 @@ END
 DECLARE @OrderId INT
 
 SELECT @OrderId = Out.OrderID
-FROM (	SELECT TOP 1 OD.OrderID, COUNT(OD.ProductID) Minimal
-	FROM Orders O
-	INNER JOIN [Order Details] OD
-	ON O.OrderID = OD.OrderID
-	WHERE O.CustomerID = @CustomerId
-	GROUP BY OD.OrderID
-	ORDER BY Minimal ASC) Out
+FROM (  SELECT TOP 1 Od.OrderID
+                    , COUNT(OD.ProductID) AS Minimal
+        FROM Orders O
+        INNER JOIN [Order Details] Od
+        ON O.OrderID = OD.OrderID
+        WHERE O.CustomerID = @CustomerId
+        GROUP BY Od.OrderID
+        ORDER BY Minimal ASC) Out
 
 INSERT INTO [Order Details] 
 VALUES (@OrderId, @ProductId, @UnitPrice, 1, 0)
 
 GO
-
+--
 EXEC dodajProduktDo 'Lonesome Pine Restaurant', 'Chang'
