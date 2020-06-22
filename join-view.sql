@@ -3,7 +3,7 @@
 CREATE VIEW "Products from USA" AS
 SELECT *
 FROM Products
-WHERE SupplierID IN (	SELECT SupplierID
+WHERE SupplierID IN (	SELECT SupplierID 
 						FROM Suppliers
 						WHERE Country = 'USA');
 
