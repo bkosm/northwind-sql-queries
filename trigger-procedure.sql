@@ -1,88 +1,96 @@
 -- 1 Skonstruuj procedurę wyświetlającą informacje o zamówieniach dokonanych pomiędzy podanymi datami.
+
 CREATE PROCEDURE zamowieniaMiedzy @Od DATETIME, @Do DATETIME
 AS
 SELECT * FROM Orders
 WHERE OrderDate > @Od AND OrderDate < @Do
 ORDER BY OrderDate ASC
 GO
-
+--
 EXEC zamowieniaMiedzy '1996-10-10', '2000-01-01'
 
--- 2 Skonstruuj procedurę wyświetlającą informacje o zamówieniach dostarczanych do kraju, którego nazwa zawiera podaną frazę oraz o wartości większej niż (również) podana.
+-- 2 Skonstruuj procedurę wyświetlającą informacje o zamówieniach dostarczanych do kraju, którego nazwa 
+--   zawiera podaną frazę oraz o wartości większej niż (również) podana.
+
 CREATE PROCEDURE zamowieniaZ @Fraza NVARCHAR(15), @Cena MONEY
 AS
 SELECT *
-FROM Orders o
-WHERE o.ShipCountry LIKE '%'+@Fraza+'%' AND EXISTS (	SELECT o.OrderId
-							FROM [Order Details] od
-							INNER JOIN Orders o 															ON o.OrderID = od.OrderID
-							GROUP BY o.OrderID
-							HAVING SUM(od.UnitPrice*od.Quantity*(1-od.Discount)) > @Cena)
+FROM Orders O
+WHERE O.ShipCountry LIKE '%'+@Fraza+'%' AND EXISTS (	SELECT O.OrderId
+														FROM [Order Details] Od
+														INNER JOIN Orders O 															
+														ON O.OrderID = Od.OrderID
+														GROUP BY O.OrderID
+														HAVING SUM(Od.UnitPrice * Od.Quantity * (1 - Od.Discount)) > @Cena)
 GO
-
+--
 EXEC zamowieniaZ 'USA', 10000
 
--- 3 Zaprojektuj wyzwalacz wypisujący (PRINT) nazwę produktu oraz nazwę kategorii po każdorazowym dodaniu nowego produktu do tabeli ‘Products’
+-- 3 Zaprojektuj wyzwalacz wypisujący (PRINT) nazwę produktu oraz nazwę kategorii po każdorazowym dodaniu 
+--   nowego produktu do tabeli ‘Products’
+
 CREATE TRIGGER wyswietl
 ON Products
 AFTER INSERT
-AS DECLARE @produkt NVARCHAR(40), @kategoria INT
-BEGIN
+AS
+DECLARE @produkt NVARCHAR(40), @kategoria NVARCHAR(15)
+
 SELECT @produkt = ProductName FROM INSERTED
-SELECT @kategoria = CategoryID FROM INSERTED
+
+SELECT @kategoria = C.CategoryName
+FROM INSERTED I, Categories C
+WHERE I.CategoryID = C.CategoryID
 
 PRINT 'P:' + @produkt + '; K: ' + CAST(@kategoria AS VARCHAR(40)) + ';'
-END
-
+--
 INSERT INTO Products(ProductName, CategoryID)
 VALUES ('Produkt', 1)
 
--- 4 Skonstruuj procedurę ustawiającą rabat (Discount) o podanej wysokości produktom, których wartość (cena jednostkowa · ilość) jest większa niż podana wartość.
+-- 4 Skonstruuj procedurę ustawiającą rabat (Discount) o podanej wysokości produktom, których wartość 
+--   (cena jednostkowa · ilość) jest większa niż podana wartość.
+
 CREATE PROCEDURE ustawRabat @Cena MONEY, @Rabat REAL
 AS
-UPDATE 	[Order Details]
-SET 	Discount = @Rabat
-WHERE 	UnitPrice * Quantity > @Cena
+UPDATE [Order Details]
+SET Discount = @Rabat
+WHERE UnitPrice * Quantity > @Cena
 GO
-
+--
 EXEC ustawRabat 100, 0.2
 
--- 5 Dodaj nową kolumnę do tabeli ‘Orders’ o nazwie ‘LastModified’ przechowującą datę ostatniej modyfikacji zamówienia. Następnie zaprojektuj wyzwalacz uaktualniający datę modyfikacji zamówienia w odpowiedzi na jakąkolwiek zmianę (INSERT, UPDATE, DELETE) w tabeli ‘Order Details’ (dotyczącą danego zamówienia).
+-- 5 Dodaj nową kolumnę do tabeli ‘Orders’ o nazwie ‘LastModified’ przechowującą datę ostatniej 
+--   modyfikacji zamówienia. Następnie zaprojektuj wyzwalacz uaktualniający datę modyfikacji zamówienia w odpowiedzi 
+--   na jakąkolwiek zmianę (INSERT, UPDATE, DELETE) w tabeli ‘Order Details’ (dotyczącą danego zamówienia).
+
 ALTER TABLE Orders
 ADD LastModified DATETIME;
-
+--
 CREATE TRIGGER odswiezModyfikacje
-ON Orders
+ON OrderDetails
 AFTER INSERT, UPDATE, DELETE
 AS
-DECLARE @TempKey int
-IF EXISTS (SELECT * FROM inserted I) AND EXISTS (SELECT * FROM deleted)
+DECLARE @TempKey INT = NULL
+
+IF EXISTS (SELECT * FROM INSERTED)
 BEGIN
-  	SELECT @TempKey = I.OrderID FROM inserted I
-	UPDATE 	Orders
-	SET	LastModified = GETDATE()
-	WHERE 	OrderID = @TempKey
-	
-  	SELECT @TempKey = D.OrderID FROM deleted D
-	UPDATE 	Orders
-	SET	LastModified = GETDATE()
-	WHERE 	OrderID = @TempKey
+  	SELECT @TempKey = OrderID FROM INSERTED
 END
-IF EXISTS (SELECT * FROM inserted) AND NOT EXISTS(SELECT * FROM deleted)
+ELSE IF EXISTS (SELECT * FROM UPDATED)
 BEGIN
-  	SELECT @TempKey = I.OrderID FROM inserted I
-	UPDATE 	Orders
-	SET	LastModified = GETDATE()
-	WHERE 	OrderID = @TempKey
+  	SELECT @TempKey = OrderID FROM UPDATED
 END
-IF EXISTS (SELECT * FROM deleted) AND NOT EXISTS(SELECT * FROM inserted)
+ELSE IF EXISTS (SELECT * FROM DELETED)
 BEGIN
-	SELECT @TempKey = D.OrderID FROM deleted D
-	UPDATE 	Orders
-	SET	LastModified = GETDATE()
-	WHERE 	OrderID = @TempKey
+	SELECT @TempKey = OrderID FROM DELETED
 END
 
+IF (@TempKey != NULL)
+BEGIN
+UPDATE 	Orders
+SET	LastModified = GETDATE()
+WHERE OrderID = @TempKey
+END
+--
 UPDATE 	Orders 
 SET 	Freight = 12
 WHERE 	OrderID = 10248;
