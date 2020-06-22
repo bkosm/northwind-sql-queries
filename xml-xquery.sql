@@ -52,10 +52,15 @@ SELECT @t.query('
 
 --6 Utwórz zapytanie wyświetlające dokument XML zawierający informacje o zamówieniach (tabele Orders oraz Order Details), 
 -- których całkowita wartość przekroczyła 15000 (piętnaście tysięcy).
-
-SELECT O.*
-    , CAST((    SELECT Z.* FROM [Order Details] AS Z
-                WHERE Z.OrderID = O.OrderID
+SELECT O.OrderID
+	, CAST(SUM((1 - Odd.Discount) * Odd.UnitPrice * Odd.Quantity) AS INT) AS Price
+    , CAST((    SELECT Od.* 
+				FROM [Order Details] Od
+                WHERE Od.OrderID = O.OrderID
                 FOR XML RAW('Detail')) AS XML) 
 FROM Orders O
-FOR XML RAW('Order'), ROOT('Orders');
+INNER JOIN [Order Details] Odd
+ON O.OrderID = Odd.OrderID
+GROUP BY O.OrderID
+HAVING SUM((1 - Odd.Discount) * Odd.UnitPrice * Odd.Quantity) > 15000
+FOR XML RAW('Order'), ROOT('Orders')
