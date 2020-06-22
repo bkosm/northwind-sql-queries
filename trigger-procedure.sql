@@ -18,10 +18,10 @@ SELECT *
 FROM Orders O
 WHERE O.ShipCountry LIKE '%'+@Fraza+'%' AND EXISTS (    SELECT O.OrderId 
                                                         FROM [Order Details] Od
-														INNER JOIN Orders O 															
-														ON O.OrderID = Od.OrderID
-														GROUP BY O.OrderID
-														HAVING SUM(Od.UnitPrice * Od.Quantity * (1 - Od.Discount)) > @Cena)
+                                                        INNER JOIN Orders O 															
+                                                        ON O.OrderID = Od.OrderID
+                                                        GROUP BY O.OrderID
+                                                        HAVING SUM(Od.UnitPrice * Od.Quantity * (1 - Od.Discount)) > @Cena)
 GO
 --
 EXEC zamowieniaZ 'USA', 10000
@@ -86,14 +86,14 @@ END
 
 IF (@TempKey != NULL)
 BEGIN
-UPDATE 	Orders
-SET	LastModified = GETDATE()
-WHERE OrderID = @TempKey
+    UPDATE Orders
+    SET	LastModified = GETDATE()
+    WHERE OrderID = @TempKey
 END
 --
-UPDATE 	Orders 
-SET 	Freight = 12
-WHERE 	OrderID = 10248;
+UPDATE [Order Details]
+SET Quantity = 2
+WHERE OrderID = 10248;
 
 -- 6 Zaprojektuj wyzwalacz, który po dodaniu nowego klienta wypisze (PRINT) informacje o produktach zakupionych przez klientów z tego samego miasta co nowy klient.
 CREATE TRIGGER pokazProdukty
