@@ -56,6 +56,6 @@ SELECT @t.query('
 SELECT O.*
 	, CAST((	SELECT Z.* FROM [Order Details] AS Z
 				WHERE Z.OrderID = O.OrderID
-				FOR XML RAW('Detail')) AS XML)
+				FOR XML RAW('Detail')) AS XML) 
 FROM Orders O
 FOR XML RAW('Order'), ROOT('Orders');
