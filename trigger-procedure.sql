@@ -16,7 +16,7 @@ CREATE PROCEDURE zamowieniaZ @Fraza NVARCHAR(15), @Cena MONEY
 AS
 SELECT *
 FROM Orders O
-WHERE O.ShipCountry LIKE '%'+@Fraza+'%' AND EXISTS (	SELECT O.OrderId
+WHERE O.ShipCountry LIKE '%'+@Fraza+'%' AND EXISTS (	SELECT O.OrderId 
 														FROM [Order Details] Od
 														INNER JOIN Orders O 															
 														ON O.OrderID = Od.OrderID
