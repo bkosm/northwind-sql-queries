@@ -5,19 +5,20 @@ SELECT *
 FROM Products
 WHERE SupplierID IN (	SELECT SupplierID 
                         FROM Suppliers
-						WHERE Country = 'USA');
+                        WHERE Country = 'USA');
 
 -- 2 Wyświetl klientów, którzy nie zakupili żadnego produktu (użyj NOT IN).
 
 SELECT *
 FROM Customers
 WHERE CustomerID NOT IN (	SELECT CustomerID
-							FROM Orders);
+                            FROM Orders);
 
 -- 3 Wyświetl wszystkie możliwe pary (iloczyn kartezjański) imion i nazwisk pracowników (FirstName, LastName).
 
 SELECT A.FirstName, B.LastName
-FROM Employees A CROSS JOIN Employees B;
+FROM Employees A 
+CROSS JOIN Employees B;
 
 -- 4 Wyświetl nazwy firm klientów (CompanyName) oraz zamówione przez nie produkty (ProductName).
 
@@ -61,10 +62,10 @@ GROUP BY C.CategoryName;
 UPDATE Products
 SET UnitPrice *= 1.1
 WHERE EXISTS (	SELECT *
-				FROM Orders O
-				INNER JOIN [Order Details] Od
-				ON o.OrderID = od.OrderID
-				HAVING COUNT(DISTINCT O.CustomerID) >= 10);
+                FROM Orders O
+                INNER JOIN [Order Details] Od
+                ON o.OrderID = od.OrderID
+                HAVING COUNT(DISTINCT O.CustomerID) >= 10);
 
 -- 9 Zapisz do nowej tabeli o nazwie ‘Customer Product Employee’ informacje o tym kto zamówił produkt 
 --   (CompanyName), nazwę zamówionego produktu (ProductName) oraz imię i nazwisko pracownika powiązanego 
