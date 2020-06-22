@@ -103,5 +103,5 @@ SELECT SupplierID
 	, ProductName as Cheapest 
 FROM Products P
 WHERE P.UnitPrice IN (	SELECT MIN(UnitPrice) 
-						FROM Products Pi 
-						WHERE P.SupplierID = Pi.SupplierID);
+			FROM Products Pi 
+			WHERE P.SupplierID = Pi.SupplierID);
