@@ -56,10 +56,10 @@ CREATE TABLE przedmioty (
 --– przedmiot_id (klucz obcy z tabeli przedmioty),
 --– (klucz główny tej tabeli powinny stanowić nr_indeksu oraz przedmiot_id)
 
-create table studenci_przedmioty (
+CREATE TABLE studenci_przedmioty (
 	nr_indeksu	INT FOREIGN KEY REFERENCES studenci(nr_indeksu),
 	przedmiot_id	INT FOREIGN KEY REFERENCES przedmioty(przedmiot_id),
-	primary key	(nr_indeksu, przedmiot_id)
+	PRIMARY KEY (nr_indeksu, przedmiot_id)
 );
 
 --7 Utwórz nową tabelę o nazwie oceny zawierającą następujące kolumny:
@@ -68,73 +68,80 @@ create table studenci_przedmioty (
 --– przedmiot_id (klucz obcy z tabeli przedmioty, niepuste),
 --– wartosc (liczba z częściami dziesiętnymi, niepuste, domyślnie ‘2.0’),
 --– data (data, niepuste, domyślnie aktualna data) (GETDATE()).
-create table oceny (
-	ocena_id	int,
-	nr_indeksu	int foreign key references studenci(nr_indeksu)		not null,
-	przedmiot_id	int foreign key references przedmioty(przedmiot_id) 	not null,
-	wartosc		decimal(2,1)						default 2.0,
-	data		date							default getdate(),
-	primary key	(ocena_id)
+
+CREATE TABLE oceny (
+	ocena_id	INT PRIMARY KEY,
+	nr_indeksu	INT FOREIGN KEY REFERENCES studenci(nr_indeksu) NOT NULL,
+	przedmiot_id	INT FOREIGN KEY REFERENCES przedmioty(przedmiot_id) NOT NULL,
+	wartosc		DECIMAL(2,1) DEFAULT 2.0,
+	data		DATE DEFAULT GETDATE()
 );
+
 --8 Zmodyfikuj tabele (ALTER TABLE ...) dodając:
 --– (tabela oceny) ograniczenie niepozwalające na wstawianie ocen o wartościach mniejszych niż 2.0 oraz większych niż 5.0,
 --– (tabela przedmioty) ograniczenie niepozwalające na dodawanie przedmiotów o takich samych nazwach (UNIQUE),
 --– (tabela kierunki) ograniczenie niepozwalające na dodawanie kierunków o takich samych nazwach,
 --– (tabela kierunki) nową kolumnę o nazwie opis typu text, z domyślą wartością równą ‘pusty opis’.
-alter table oceny
-add check(wartosc >= 2.0 and wartosc <= 5.0);
+
+ALTER TABLE oceny
+ADD CHECK(wartosc >= 2.0 AND wartosc <= 5.0);
 --
-alter table przedmioty
-add unique(nazwa);
+ALTER TABLE przedmioty
+ADD UNIQUE(nazwa);
 --
-alter table kierunki
-add unique(nazwa);
+ALTER TABLE kierunki
+ADD UNIQUE(nazwa);
 --
-alter table kierunki
-add opis text default 'pusty opis';
---9 Wypełnij utworzone wcześniej tabele przykładowymi danymi (polecenie INSERT), tak aby każda tabela zawierała co najmniej trzy wiersze (krotki).
-insert into studenci
-values (100000, 'Bartosz', 'Kosmala', 'Sucha 30', 'Polska');
-insert into studenci (nr_indeksu, imie, nazwisko, adres)
-values (100010, 'John', 'Kowalski', 'Smolna 2');
-insert into studenci
-values (100100, 'Marta', 'Nowa', 'Gdyńska 38', 'Niemcy');
+ALTER TABLE kierunki
+ADD opis TEXT DEFAULT 'pusty opis';
+
+--9 Wypełnij utworzone wcześniej tabele przykładowymi danymi (polecenie INSERT), tak aby każda tabela zawierała co 
+--  najmniej trzy wiersze (krotki).
+
+INSERT INTO studenci
+VALUES (100000, 'Bartosz', 'Kosmala', 'Sucha 30', 'Polska');
+INSERT INTO studenci (nr_indeksu, imie, nazwisko, adres)
+VALUES (100010, 'John', 'Kowalski', 'Smolna 2');
+INSERT INTO studenci
+VALUES (100100, 'Marta', 'Nowa', 'Gdyńska 38', 'Niemcy');
 --
-insert into wykladowcy
-values (1, 'Tomasz', 'Blisko');
-insert into wykladowcy
-values (2, 'Marcin', 'Mocno');
-insert into wykladowcy
-values (3, 'Jolanta', 'Szybka');
+INSERT INTO wykladowcy
+VALUES (1, 'Tomasz', 'Blisko');
+INSERT INTO wykladowcy
+VALUES (2, 'Marcin', 'Mocno');
+INSERT INTO wykladowcy
+VALUES (3, 'Jolanta', 'Szybka');
 --
-insert into kierunki (kierunek_id, nazwa)
-values (1, 'Informatyka');
-insert into kierunki
-values (2, 'Elektronika i Telekomunikacja', 'Dwa semestry maks');
-insert into kierunki
-values (3, 'Budownictwo', 'Cyk budynek');
+INSERT INTO kierunki (kierunek_id, nazwa)
+VALUES (1, 'Informatyka');
+INSERT INTO kierunki
+VALUES (2, 'Elektronika i Telekomunikacja', 'Dwa semestry maks');
+INSERT INTO kierunki
+VALUES (3, 'Budownictwo', 'Cyk budynek');
 --
-insert into przedmioty
-values (1, 1, 2,'Bazy Danych');
-insert into przedmioty
-values (2, 2, 3,'Teoria Obwodów');
-insert into przedmioty
-values (3, 1, 1,'Technologie sieciowe');
+INSERT INTO przedmioty
+VALUES (1, 1, 2,'Bazy Danych');
+INSERT INTO przedmioty
+VALUES (2, 2, 3,'Teoria Obwodów');
+INSERT INTO przedmioty
+VALUES (3, 1, 1,'Technologie sieciowe');
 --
-insert into studenci_przedmioty
-values (100000, 1);
-insert into studenci_przedmioty
-values (100010, 3);
-insert into studenci_przedmioty
-values (100100, 2);
+INSERT INTO studenci_przedmioty
+VALUES (100000, 1);
+INSERT INTO studenci_przedmioty
+VALUES (100010, 3);
+INSERT INTO studenci_przedmioty
+VALUES (100100, 2);
 --
-insert into oceny (ocena_id, nr_indeksu, przedmiot_id, wartosc)
-values (1, 100100, 2, 3.0);
-insert into oceny (ocena_id, nr_indeksu, przedmiot_id, wartosc)
-values (2, 100010, 1, 4.5);
-insert into oceny (ocena_id, nr_indeksu, przedmiot_id, wartosc)
-values (3, 100000, 3, 2.0);
+INSERT INTO oceny (ocena_id, nr_indeksu, przedmiot_id, wartosc)
+VALUES (1, 100100, 2, 3.0);
+INSERT INTO oceny (ocena_id, nr_indeksu, przedmiot_id, wartosc)
+VALUES (2, 100010, 1, 4.5);
+INSERT INTO oceny (ocena_id, nr_indeksu, przedmiot_id, wartosc)
+VALUES (3, 100000, 3, 2.0);
+
 --10 Zmień wszystkie oceny (wszystkim studentom) o wartości 2.0 na 3.0 (UPDATE).
-update oceny
-set wartosc = 3.0
-where wartosc = 2.0;
+
+UPDATE oceny
+SET wartosc = 3.0
+WHERE wartosc = 2.0;
