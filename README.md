@@ -1,4 +1,3 @@
-# bazy-danych-lab
 ## Northwind Relations
 <p align="center">
   <img src="https://d2vlcm61l7u1fs.cloudfront.net/media%2F5a6%2F5a6dbbe9-db6e-448b-91ed-8126085eec67%2FphpqsVSNv.png" title="diagram">
